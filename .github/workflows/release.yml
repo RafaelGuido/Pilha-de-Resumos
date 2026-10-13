@@ -58,6 +58,11 @@ jobs:
           name: Pilha-de-Resumos-Windows
           path: Pilha-de-Resumos-Windows.zip
 
+      - name: Apontar a tag da versão para este commit
+        run: |
+          git tag -f "${{ steps.zip.outputs.versao }}" "$GITHUB_SHA"
+          git push -f origin "refs/tags/${{ steps.zip.outputs.versao }}"
+
       - name: Publicar Release
         uses: softprops/action-gh-release@v2
         with:
