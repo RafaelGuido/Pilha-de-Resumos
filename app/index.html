@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; worker-src 'self' blob:; font-src 'self' data:">
+  <title>Pilha de Resumos</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/docx-preview.min.js"></script>
+</head>
+<body>
+  <aside class="lateral">
+    <div class="marca">
+      <span class="marca-pilha" aria-hidden="true"><i></i><i></i><i></i></span>
+      <div>
+        <div class="marca-nome">Pilha</div>
+        <div class="marca-sub">de resumos</div>
+      </div>
+    </div>
+    <div class="data-hoje" id="dataHoje"></div>
+    <nav id="listaPastas" class="lista-pastas"></nav>
+    <button class="btn-fantasma nova-pasta" id="btnNovaPasta">+ Nova pasta</button>
+    <div class="lateral-rodape">
+      <button class="btn-fantasma" id="btnConfig">⚙ Configurações</button>
+    </div>
+  </aside>
+
+  <main class="principal">
+    <header class="cabecalho">
+      <div>
+        <h1 id="tituloPasta"></h1>
+        <div class="abas" role="tablist">
+          <button role="tab" class="aba" data-aba="hoje" id="abaHoje">Revisão de hoje</button>
+          <button role="tab" class="aba" data-aba="pilha" id="abaPilha">A pilha</button>
+        </div>
+      </div>
+      <div class="cabecalho-acoes">
+        <button class="btn" id="btnPastaConfig" title="Ajustes desta pasta">Ajustes</button>
+        <button class="btn btn-primario" id="btnAdicionar">+ Adicionar resumos</button>
+      </div>
+    </header>
+
+    <section id="vistaHoje" class="vista"></section>
+    <section id="vistaPilha" class="vista" hidden></section>
+  </main>
+
+  <div id="soltar" class="soltar" hidden>
+    <div class="soltar-caixa">Solte para adicionar à pasta <b id="soltarPasta"></b></div>
+  </div>
+
+  <dialog id="modal" class="modal"></dialog>
+  <div id="toast" class="toast" hidden></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

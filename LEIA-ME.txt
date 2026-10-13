@@ -1,0 +1,31 @@
+PILHA DE RESUMOS
+================
+
+COMO ABRIR
+1. Extraia esta pasta inteira para algum lugar fixo (ex.: Documentos).
+   Não rode direto de dentro do .zip.
+2. Dê dois cliques em "Pilha de Resumos.exe".
+   Dica: botão direito > Enviar para > Área de trabalho (criar atalho).
+3. Na primeira vez o Windows pode mostrar "O Windows protegeu o computador".
+   Clique em "Mais informações" > "Executar assim mesmo". (Acontece porque
+   o app não tem assinatura paga da Microsoft; é normal para app caseiro.)
+
+COMO USAR
+- Há duas pastas: "Resumos de matérias" e "Caderno de questões". Cada uma
+  é uma pilha separada. Dá para criar outras em "+ Nova pasta".
+- Adicione os resumos em PDF, Word (.docx) ou foto (JPG/PNG): pelo botão
+  "+ Adicionar resumos" ou arrastando os arquivos para a janela.
+- Todo dia o app mostra as próximas folhas da fila (2 por padrão).
+  Para revisar mais por dia, use o "−  +" no topo da revisão.
+- Leu tudo? Clique em "Concluí a revisão de hoje". Essas folhas vão para
+  o fim da fila e amanhã aparecem as próximas. Quando a fila acaba,
+  recomeça do início.
+- Resumo novo entra no topo da pilha e aparece a partir do dia seguinte.
+- Na aba "A pilha" dá para ver a ordem, reordenar, renomear, trocar o
+  arquivo por uma versão nova ou remover.
+
+ONDE FICAM OS ARQUIVOS
+- Em Documentos\Pilha de Resumos (o app guarda uma cópia de cada resumo).
+- Em Configurações dá para mudar para uma pasta do Google Drive/OneDrive,
+  e assim ter backup.
+- Arquivos removidos vão para a subpasta "_removidos".

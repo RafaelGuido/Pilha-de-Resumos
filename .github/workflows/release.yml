@@ -1,0 +1,49 @@
+# Gera o app para Windows e publica como Release.
+# - Ao criar uma tag "v*" (ex.: v1.0.0), o zip vai para a página de Releases.
+# - Rodando manualmente (aba Actions > "Gerar app Windows" > Run workflow), o zip fica nos Artifacts da execução.
+name: Gerar app Windows
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build:win
+
+      - name: Montar o zip
+        run: |
+          DIR="dist/Pilha de Resumos-win32-x64"
+          # mantém só os idiomas usados, para o zip ficar menor
+          find "$DIR/locales" -type f ! -name 'pt-BR.pak' ! -name 'en-US.pak' -delete
+          cp LEIA-ME.txt "$DIR/"
+          cd dist && zip -qr -9 ../Pilha-de-Resumos-Windows.zip "Pilha de Resumos-win32-x64"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pilha-de-Resumos-Windows
+          path: Pilha-de-Resumos-Windows.zip
+
+      - name: Publicar Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Pilha-de-Resumos-Windows.zip
+          body: |
+            Baixe **Pilha-de-Resumos-Windows.zip**, extraia a pasta e abra **Pilha de Resumos.exe**.
+            Na primeira vez o Windows pode avisar "O Windows protegeu o computador": clique em *Mais informações* > *Executar assim mesmo*.

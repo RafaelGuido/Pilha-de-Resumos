@@ -1,0 +1,24 @@
+{
+  "name": "pilha-de-resumos",
+  "productName": "Pilha de Resumos",
+  "version": "1.0.0",
+  "description": "Revisão diária de resumos em pilha (fila cíclica) para estudos",
+  "main": "main.js",
+  "author": "Rafael Guido",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RafaelGuido/Pilha-de-Resumos.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-packager . \"Pilha de Resumos\" --platform=win32 --arch=x64 --asar --icon=build/icone.ico --ignore=\"^/node_modules\" --ignore=\"^/build\" --ignore=\"^/dist\" --ignore=\"^/docs\" --ignore=\"^/\\.github\" --ignore=\"^/\\.gitignore$\" --ignore=\"^/gerar-windows\\.bat$\" --ignore=\"^/README\\.md$\" --ignore=\"^/LEIA-ME\\.txt$\" --out=dist --overwrite"
+  },
+  "devDependencies": {
+    "@electron/packager": "18.3.6",
+    "electron": "33.2.1",
+    "docx-preview": "0.3.5",
+    "jszip": "3.10.1",
+    "pdfjs-dist": "4.10.38"
+  }
+}
