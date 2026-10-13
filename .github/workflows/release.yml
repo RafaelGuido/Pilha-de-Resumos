@@ -1,15 +1,32 @@
-# Gera o app para Windows e publica como Release.
-# - Ao criar uma tag "v*" (ex.: v1.0.0), o zip vai para a página de Releases.
-# - Rodando manualmente (aba Actions > "Gerar app Windows" > Run workflow), o zip fica nos Artifacts da execução.
+# Gera o app para Windows e publica na página de Releases.
+#
+# Roda sozinho a cada push na main que mexa no app, e também manualmente
+# (aba Actions > "Gerar app Windows" > Run workflow).
+# A release usa a versão do package.json (ex.: 1.0.0 -> v1.0.0):
+#   - mesma versão: o zip da release existente é atualizado;
+#   - versão nova: cria uma release nova.
 name: Gerar app Windows
 
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'main.js'
+      - 'preload.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'build/**'
+      - 'LEIA-ME.txt'
+      - '.github/workflows/release.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -27,12 +44,14 @@ jobs:
       - run: npm run build:win
 
       - name: Montar o zip
+        id: zip
         run: |
           DIR="dist/Pilha de Resumos-win32-x64"
           # mantém só os idiomas usados, para o zip ficar menor
           find "$DIR/locales" -type f ! -name 'pt-BR.pak' ! -name 'en-US.pak' -delete
-          cp LEIA-ME.txt "$DIR/"
-          cd dist && zip -qr -9 ../Pilha-de-Resumos-Windows.zip "Pilha de Resumos-win32-x64"
+          cp LEIA-ME.txt LICENSE "$DIR/"
+          (cd dist && zip -qr -9 ../Pilha-de-Resumos-Windows.zip "Pilha de Resumos-win32-x64")
+          echo "versao=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -40,10 +59,17 @@ jobs:
           path: Pilha-de-Resumos-Windows.zip
 
       - name: Publicar Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.zip.outputs.versao }}
+          target_commitish: ${{ github.sha }}
+          name: Pilha de Resumos ${{ steps.zip.outputs.versao }}
+          make_latest: true
           files: Pilha-de-Resumos-Windows.zip
           body: |
-            Baixe **Pilha-de-Resumos-Windows.zip**, extraia a pasta e abra **Pilha de Resumos.exe**.
-            Na primeira vez o Windows pode avisar "O Windows protegeu o computador": clique em *Mais informações* > *Executar assim mesmo*.
+            ## Como instalar
+            1. Baixe **Pilha-de-Resumos-Windows.zip** (logo abaixo, em *Assets*).
+            2. Extraia a pasta inteira para um lugar fixo (ex.: Documentos).
+            3. Abra **Pilha de Resumos.exe**. Não precisa instalar nada.
+
+            Na primeira vez o Windows pode avisar *"O Windows protegeu o computador"*: clique em **Mais informações → Executar assim mesmo**.

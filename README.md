@@ -44,14 +44,12 @@ No Windows, `gerar-windows.bat` faz o `npm install` + build com dois cliques.
 
 ### Publicar uma versão
 
-O workflow `.github/workflows/release.yml` gera o zip do Windows no GitHub Actions. Para publicar:
+O workflow `.github/workflows/release.yml` gera o zip do Windows no GitHub Actions a cada push na `main` que mexa no app, e publica em **Releases** com a versão do `package.json`:
 
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
+- mesma versão → o zip da release atual é substituído;
+- versão nova (ex.: mude `"version"` para `1.1.0`) → cria a release `v1.1.0`.
 
-Em poucos minutos o zip aparece em **Releases**. Também dá para rodar manualmente em *Actions → Gerar app Windows → Run workflow* (o zip fica nos *Artifacts* da execução).
+Também dá para rodar manualmente em *Actions → Gerar app Windows → Run workflow*.
 
 ### Estrutura
 
