@@ -1,7 +1,7 @@
 {
   "name": "pilha-de-resumos",
   "productName": "Pilha de Resumos",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Revisão diária de resumos em pilha (fila cíclica) para estudos",
   "main": "main.js",
   "author": "Rafael Guido",

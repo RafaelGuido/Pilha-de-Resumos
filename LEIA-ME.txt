@@ -29,3 +29,6 @@ ONDE FICAM OS ARQUIVOS
 - Em Configurações dá para mudar para uma pasta do Google Drive/OneDrive,
   e assim ter backup.
 - Arquivos removidos vão para a subpasta "_removidos".
+- Configurações > Exportar backup gera um .zip com tudo. Ele também
+  restaura a pilha na versão para iPad/navegador:
+  https://rafaelguido.github.io/Pilha-de-Resumos/

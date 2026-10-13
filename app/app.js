@@ -5,6 +5,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.mjs';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const api = window.pilha;
+const WEB = api.plataforma === 'web';
+const ROTULO_ABRIR = WEB ? 'Abrir em nova aba ↗' : 'Abrir no programa ↗';
+const EH_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const INSTALADO = !!navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
 
 let estado = null;
 let pastaDados = '';
@@ -30,6 +34,12 @@ function fmtDiaExtenso(iso) {
   const [a, m, d] = iso.split('-').map(Number);
   const dt = new Date(a, m - 1, d);
   return dt.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+function diasDesde(iso) {
+  if (!iso) return Infinity;
+  const [a, m, d] = iso.split('-').map(Number);
+  const [ha, hm, hd] = hoje().split('-').map(Number);
+  return Math.round((new Date(ha, hm - 1, hd) - new Date(a, m - 1, d)) / 86400000);
 }
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
@@ -138,7 +148,7 @@ async function renderizarFolha(item, alvo) {
   } catch (err) {
     console.error(err);
     alvo.innerHTML = `<div class="erro-folha">Não consegui mostrar este arquivo aqui.<br><small>${esc(err.message || err)}</small><br>
-      <button class="btn" data-abrir="${esc(item.arquivo)}">Abrir no programa do computador</button></div>`;
+      <button class="btn" data-abrir="${esc(item.arquivo)}">${WEB ? 'Abrir em nova aba' : 'Abrir no programa do computador'}</button></div>`;
   }
 }
 
@@ -259,7 +269,7 @@ function htmlVazio() {
   return `<div class="vazio-caixa">
     <div class="vazio-pilha" aria-hidden="true"><i></i><i></i><i></i></div>
     <h2>Esta pasta ainda está vazia</h2>
-    <p>Arraste para cá os resumos em <b>PDF</b>, <b>Word (.docx)</b> ou <b>foto</b> da folha,<br>ou use o botão abaixo. Pode adicionar vários de uma vez.</p>
+    <p>${WEB ? 'Toque no botão abaixo e escolha' : 'Arraste para cá'} os resumos em <b>PDF</b>, <b>Word (.docx)</b> ou <b>foto</b> da folha${WEB ? '' : ',<br>ou use o botão abaixo'}. Pode adicionar vários de uma vez.</p>
     <button class="btn btn-primario" data-acao="adicionar">+ Adicionar resumos</button>
   </div>`;
 }
@@ -285,6 +295,7 @@ function renderHoje() {
       <p class="feito-sub">Estas folhas voltaram para o fim da fila:</p>
       <ul class="feito-lista">${sel.itens.map((i) => `<li>${esc(i.titulo)}</li>`).join('')}</ul>
       ${prox.length ? `<div class="amanha"><span class="amanha-rotulo">Amanhã</span>${prox.map((i) => `<span class="amanha-item">${esc(i.titulo)}</span>`).join('')}</div>` : ''}
+      ${WEB && diasDesde(estado.ultimoBackup) >= 14 ? `<p class="lembrete-backup">Último backup: ${estado.ultimoBackup ? fmtData(estado.ultimoBackup) : 'nunca'}. <button class="link" data-acao="backup">Fazer backup agora</button></p>` : ''}
       <div class="feito-acoes">
         <button class="btn" data-acao="revisar-mais">Revisar mais ${p.porDia} agora</button>
         <button class="btn-fantasma" data-acao="desfazer-hoje">Desfazer a revisão de hoje</button>
@@ -309,7 +320,7 @@ function renderHoje() {
         <div class="folha-cab">
           <span class="folha-ordem">${k + 1}<small>/${sel.itens.length}</small></span>
           <div class="folha-titulos"><h3>${esc(i.titulo)}</h3><span class="folha-meta">${htmlMetaItem(i)}</span></div>
-          <button class="btn-fantasma pequeno" data-abrir="${esc(i.arquivo)}" title="Abrir no Word / leitor de PDF">Abrir no programa ↗</button>
+          <button class="btn-fantasma pequeno" data-abrir="${esc(i.arquivo)}" title="Abrir o arquivo original">${ROTULO_ABRIR}</button>
         </div>
         <div class="folha-paginas" data-item="${i.id}"></div>
       </li>`).join('')}
@@ -350,7 +361,7 @@ function renderPilha() {
           <span class="sep"></span>
           <button class="btn-fantasma pequeno" data-ver="${i.id}">Ver</button>
           <button class="btn-fantasma pequeno" data-renomear="${i.id}">Renomear</button>
-          <button class="btn-fantasma pequeno" data-abrir="${esc(i.arquivo)}">Abrir ↗</button>
+          ${WEB ? '' : `<button class="btn-fantasma pequeno" data-abrir="${esc(i.arquivo)}">Abrir ↗</button>`}
           <button class="btn-fantasma pequeno" data-substituir="${i.id}" title="Trocar o arquivo por uma versão nova, mantendo a posição na fila">Trocar arquivo</button>
           <button class="btn-fantasma pequeno perigo" data-remover="${i.id}">Remover</button>
         </div>
@@ -443,25 +454,39 @@ function novaPasta() {
 }
 
 function configuracoes() {
+  const ondeFica = WEB
+    ? `<div class="campo"><span>Onde os resumos ficam guardados</span>
+        <p>Neste aparelho, dentro do navegador. Nada é enviado para a internet.</p>
+        ${EH_IOS && !INSTALADO ? '<small class="alerta">⚠ O app ainda não está na Tela de Início. Sem isso, o Safari pode apagar seus resumos depois de alguns dias sem uso.</small>' : ''}
+        <small>Faça um backup de vez em quando: se o navegador for limpo ou você trocar de aparelho, é ele que traz a pilha de volta.</small>
+      </div>`
+    : `<div class="campo"><span>Onde os resumos ficam guardados</span>
+        <code class="caminho">${esc(pastaDados)}</code>
+        <div class="linha-botoes"><button class="btn" data-abrir-dados>Abrir a pasta</button><button class="btn" data-mudar-dados>Mudar de lugar…</button></div>
+        <small>Dica: se escolher uma pasta do Google Drive ou OneDrive, a pilha fica com backup e dá para usar em outro computador.</small>
+      </div>`;
   abrirModal(`<div class="modal-corpo">
     <h2>Configurações</h2>
-    <div class="campo"><span>Onde os resumos ficam guardados</span>
-      <code class="caminho">${esc(pastaDados)}</code>
-      <div class="linha-botoes"><button class="btn" data-abrir-dados>Abrir a pasta</button><button class="btn" data-mudar-dados>Mudar de lugar…</button></div>
-      <small>Dica: se escolher uma pasta do Google Drive ou OneDrive, a pilha fica com backup e dá para usar em outro computador.</small>
+    ${ondeFica}
+    <div class="campo"><span>Backup</span>
+      <div class="linha-botoes"><button class="btn" data-exportar>Exportar backup</button><button class="btn" data-importar>Restaurar backup…</button></div>
+      <small>Último backup: ${estado.ultimoBackup ? fmtData(estado.ultimoBackup) : 'nunca'}. O backup é um .zip com todas as pastas, folhas e a ordem da fila, e serve tanto no computador quanto no iPad.</small>
     </div>
     <div class="como-funciona">
       <h3>Como funciona</h3>
       <ol>
         <li>Cada pasta é uma pilha de folhas, na ordem da fila.</li>
         <li>Todo dia o app mostra as próximas folhas da fila (2 por padrão; dá para aumentar perto da prova).</li>
-        <li>Ao terminar, clique em <b>Concluí a revisão de hoje</b>: essas folhas vão para o fim da fila e amanhã vêm as seguintes.</li>
+        <li>Ao terminar, toque em <b>Concluí a revisão de hoje</b>: essas folhas vão para o fim da fila e amanhã vêm as seguintes.</li>
         <li>Quando a fila acaba, ela recomeça. Assim todas as folhas são revisadas várias vezes.</li>
         <li>Um resumo novo entra no topo da pilha e aparece a partir do dia seguinte. Se pular um dia, o app continua de onde parou.</li>
       </ol>
     </div>
     <div class="modal-acoes"><button class="btn btn-primario" data-fechar>Fechar</button></div></div>`,
   (m) => {
+    m.querySelector('[data-exportar]').addEventListener('click', () => { m.close(); exportarBackup(); });
+    m.querySelector('[data-importar]').addEventListener('click', () => { m.close(); importarBackup(); });
+    if (WEB) return;
     m.querySelector('[data-abrir-dados]').addEventListener('click', () => api.abrirPastaDados());
     m.querySelector('[data-mudar-dados]').addEventListener('click', async () => {
       const nova = await api.mudarPastaDados();
@@ -474,6 +499,111 @@ function configuracoes() {
     });
   });
 }
+
+// ---------- backup ----------
+function avisoProgresso(texto) {
+  abrirModal(`<div class="modal-corpo pequeno-modal"><h2>${texto}</h2><p class="progresso">Preparando…</p></div>`);
+  return (t) => { const el = $('#modal .progresso'); if (el) el.textContent = t; };
+}
+
+async function exportarBackup() {
+  const progresso = avisoProgresso('Gerando backup');
+  try {
+    const zip = new JSZip();
+    const itens = estado.pastas.flatMap((p) => p.itens);
+    let faltando = 0;
+    for (let k = 0; k < itens.length; k++) {
+      progresso(`Folha ${k + 1} de ${itens.length}…`);
+      try { zip.file('arquivos/' + itens[k].arquivo, await api.ler(itens[k].arquivo)); } catch { faltando++; }
+    }
+    const copia = JSON.parse(JSON.stringify(estado));
+    copia.ultimoBackup = hoje();
+    zip.file('pilha.json', JSON.stringify(copia, null, 2));
+    zip.file('LEIA-ME.txt', 'Backup do app Pilha de Resumos.\nPara restaurar: Configurações > Restaurar backup, e escolha este .zip.\n');
+    progresso('Compactando…');
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    const nome = `pilha-de-resumos-backup-${hoje()}.zip`;
+    const mb = (blob.size / 1048576).toFixed(1).replace('.', ',');
+    // o botão "Salvar" garante um toque do usuário, exigido pelo iPad para abrir a tela de compartilhar
+    abrirModal(`<div class="modal-corpo pequeno-modal">
+      <h2>Backup pronto</h2>
+      <p>${plural(itens.length - faltando, 'folha', 'folhas')} em ${plural(estado.pastas.length, 'pasta', 'pastas')} · ${mb} MB${faltando ? ` · <b>${faltando} arquivo(s) não encontrado(s)</b>` : ''}</p>
+      ${WEB && EH_IOS ? '<p>Na próxima tela, escolha <b>Salvar em Arquivos</b> (de preferência no iCloud Drive).</p>' : ''}
+      <div class="modal-acoes"><button class="btn" data-fechar>Cancelar</button><button class="btn btn-primario" data-salvar>Salvar backup</button></div></div>`,
+    (m) => m.querySelector('[data-salvar]').addEventListener('click', async () => {
+      m.close();
+      if (await api.salvarArquivo(nome, blob)) {
+        estado.ultimoBackup = hoje();
+        await salvar();
+        if (ui.aba === 'hoje') renderHoje();
+        toast('Backup salvo.');
+      }
+    }));
+  } catch (err) {
+    console.error(err);
+    $('#modal').close();
+    toast('Não consegui gerar o backup: ' + (err.message || err));
+  }
+}
+
+async function importarBackup() {
+  const buf = await api.escolherBackup();
+  if (!buf) return;
+  let zip, novo;
+  try {
+    zip = await JSZip.loadAsync(buf);
+    const f = zip.file('pilha.json');
+    if (!f) throw new Error('este .zip não é um backup da Pilha de Resumos');
+    novo = JSON.parse(await f.async('string'));
+    if (!Array.isArray(novo.pastas)) throw new Error('backup inválido');
+  } catch (err) {
+    return toast('Não consegui ler o backup: ' + (err.message || err));
+  }
+  const atuais = estado.pastas.flatMap((p) => p.itens);
+  const novos = novo.pastas.flatMap((p) => p.itens);
+  const ok = await confirmar('Restaurar backup?',
+    `A pilha atual (${plural(atuais.length, 'folha', 'folhas')}) será <b>substituída</b> pela do backup (${plural(novos.length, 'folha', 'folhas')} em ${plural(novo.pastas.length, 'pasta', 'pastas')}).`,
+    'Restaurar', true);
+  if (!ok) return;
+  const progresso = avisoProgresso('Restaurando backup');
+  try {
+    // grava primeiro os arquivos do backup; só depois remove os antigos
+    const relsNovos = new Set();
+    for (let k = 0; k < novos.length; k++) {
+      const rel = novos[k].arquivo;
+      if (!/^[\w.-]+\/[^/\\]+$/.test(rel) || rel.includes('..')) continue;
+      const arq = zip.file('arquivos/' + rel);
+      if (!arq) continue;
+      progresso(`Folha ${k + 1} de ${novos.length}…`);
+      await api.gravar(rel, await arq.async('arraybuffer'));
+      relsNovos.add(rel);
+    }
+    for (const i of atuais) if (!relsNovos.has(i.arquivo)) { try { await api.apagar(i.arquivo); } catch { /* ok */ } }
+    novo.zoom = estado.zoom;
+    estado = novo;
+    ui.pastaId = estado.pastas[0].id;
+    await salvar();
+    $('#modal').close();
+    render();
+    toast(`Backup restaurado: ${plural(relsNovos.size, 'folha', 'folhas')}.`);
+  } catch (err) {
+    console.error(err);
+    $('#modal').close();
+    toast('Erro ao restaurar: ' + (err.message || err));
+  }
+}
+
+// aviso para instalar na Tela de Início (iPad/iPhone)
+function renderAvisoInstalar() {
+  const el = $('#avisoInstalar');
+  if (!WEB || !EH_IOS || INSTALADO || lerSessao('avisoFechado')) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `<span><b>Instale o app para não perder seus resumos:</b> toque em <span class="icone-compartilhar" aria-label="Compartilhar"></span> Compartilhar e depois em <b>Adicionar à Tela de Início</b>.</span>
+    <button class="btn-fantasma pequeno" data-fechar-aviso>Agora não</button>`;
+  el.querySelector('[data-fechar-aviso]').addEventListener('click', () => { salvarSessao('avisoFechado', '1'); el.hidden = true; });
+}
+function lerSessao(k) { try { return sessionStorage.getItem('pilha.' + k); } catch { return null; } }
+function salvarSessao(k, v) { try { sessionStorage.setItem('pilha.' + k, v); } catch { /* ok */ } }
 
 // ---------- toast ----------
 let toastTimer;
@@ -515,7 +645,9 @@ document.addEventListener('click', async (e) => {
   if (b.dataset.renomear) { renomear(b.dataset.renomear); return; }
   if (b.dataset.substituir) {
     const it = itemPorId(b.dataset.substituir);
-    if (await api.substituir(it.arquivo)) { toast('Arquivo trocado. A folha continua no mesmo lugar da fila.'); render(); }
+    try {
+      if (await api.substituir(it.arquivo)) { toast('Arquivo trocado. A folha continua no mesmo lugar da fila.'); render(); }
+    } catch (err) { toast(err.message || String(err)); }
     return;
   }
   if (b.dataset.remover) {
@@ -531,6 +663,7 @@ document.addEventListener('click', async (e) => {
   switch (b.dataset.acao) {
     case 'adicionar': adicionar(await api.escolherArquivos(p.id)); break;
     case 'concluir': concluirHoje(p); break;
+    case 'backup': exportarBackup(); break;
     case 'revisar-mais': p.concluidoEm = null; await salvar(); render(); break;
     case 'desfazer-hoje': {
       // devolve as folhas de hoje para o começo da fila
@@ -644,4 +777,8 @@ setInterval(() => {
   ui.aba = lerPref('aba', 'hoje') === 'pilha' ? 'pilha' : 'hoje';
   $('#dataHoje').dataset.dia = hoje();
   render();
+  renderAvisoInstalar();
+  if (WEB && 'serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('sw.js').catch((e) => console.warn('service worker', e));
+  }
 })();

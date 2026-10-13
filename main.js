@@ -125,6 +125,38 @@ ipcMain.handle('arquivo:substituir', async (e, rel) => {
   return true;
 });
 
+ipcMain.handle('arquivo:gravar', (_e, rel, buf) => {
+  const f = path.join(pastaDados(), rel);
+  if (!path.resolve(f).startsWith(path.resolve(pastaDados()) + path.sep)) throw new Error('Caminho inválido');
+  fs.mkdirSync(path.dirname(f), { recursive: true });
+  fs.writeFileSync(f, Buffer.from(buf));
+  return true;
+});
+
+// backup
+ipcMain.handle('backup:salvar', async (e, nome, buf) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  const r = await dialog.showSaveDialog(win, {
+    title: 'Salvar backup',
+    defaultPath: path.join(app.getPath('documents'), nome),
+    filters: [{ name: 'Backup da pilha (zip)', extensions: ['zip'] }],
+  });
+  if (r.canceled || !r.filePath) return false;
+  fs.writeFileSync(r.filePath, Buffer.from(buf));
+  return true;
+});
+ipcMain.handle('backup:escolher', async (e) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  const r = await dialog.showOpenDialog(win, {
+    title: 'Escolher backup',
+    properties: ['openFile'],
+    filters: [{ name: 'Backup da pilha (zip)', extensions: ['zip'] }],
+  });
+  if (r.canceled) return null;
+  const buf = fs.readFileSync(r.filePaths[0]);
+  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+});
+
 ipcMain.handle('dados:abrirPasta', () => shell.openPath(pastaDados()));
 ipcMain.handle('dados:mudarPasta', async (e) => {
   const win = BrowserWindow.fromWebContents(e.sender);

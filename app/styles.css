@@ -304,3 +304,68 @@ h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 600; letter-spacing:
 }
 .toast[hidden], .soltar[hidden] { display: none; }
 .toast-acao { background: none; border: 1px solid currentColor; border-radius: 6px; padding: 4px 10px; color: inherit; font-weight: 600; flex: none; }
+
+/* ---------- versão web / iPad ---------- */
+.aviso-instalar {
+  display: flex; align-items: center; gap: 12px; justify-content: space-between;
+  background: #fff6cc; color: #4a3c00; border-bottom: 1px solid #ecd97a;
+  padding: 10px 32px; font-size: 14px;
+}
+.aviso-instalar[hidden] { display: none; }
+@media (prefers-color-scheme: dark) { .aviso-instalar { background: #3a3315; color: #f3e6a6; border-color: #5b5020; } }
+.icone-compartilhar {
+  display: inline-block; width: 14px; height: 17px; vertical-align: -3px; margin: 0 2px;
+  border: 1.6px solid currentColor; border-top: none; border-radius: 0 0 3px 3px; position: relative;
+}
+.icone-compartilhar::before {
+  content: ""; position: absolute; left: 50%; top: -6px; width: 1.6px; height: 12px; background: currentColor; transform: translateX(-50%);
+}
+.icone-compartilhar::after {
+  content: ""; position: absolute; left: 50%; top: -6px; width: 6px; height: 6px;
+  border-left: 1.6px solid currentColor; border-top: 1.6px solid currentColor; transform: translateX(-50%) rotate(45deg);
+}
+.alerta { color: #9a5b00 !important; font-weight: 600; }
+@media (prefers-color-scheme: dark) { .alerta { color: #f2c46d !important; } }
+.lembrete-backup { font-size: 13.5px; color: var(--tinta-suave); margin: -6px 0 18px; }
+.link { background: none; border: none; padding: 0; color: var(--destaque); text-decoration: underline; font: inherit; }
+
+/* respeita o entalhe / barra do iPad quando instalado na Tela de Início */
+body { padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left); }
+html { -webkit-text-size-adjust: 100%; }
+body { -webkit-tap-highlight-color: transparent; }
+
+/* telas de toque: alvos maiores */
+@media (pointer: coarse) {
+  .btn-icone { width: 40px; height: 40px; font-size: 17px; }
+  .pilha-acoes .btn-icone { width: 38px; height: 38px; }
+  .btn-fantasma.pequeno { padding: 8px 10px; font-size: 14px; }
+  .btn { padding: 10px 16px; }
+  .pasta-item { padding: 12px 10px; }
+  .pilha-linha { cursor: default; }
+}
+
+/* iPad em pé e telas estreitas */
+@media (max-width: 960px) {
+  body { grid-template-columns: 210px 1fr; }
+  .lateral { padding: 18px 10px 12px; }
+  .cabecalho { padding: 16px 20px 0; flex-wrap: wrap; }
+  .cabecalho h1 { font-size: 24px; }
+  .cabecalho-acoes { padding-bottom: 10px; }
+  .vista { padding: 18px 20px 60px; }
+  .aviso-instalar { padding: 10px 20px; }
+  .pilha-linha { flex-wrap: wrap; }
+  .pilha-textos { flex-basis: calc(100% - 100px); }
+  .pilha-acoes { width: 100%; justify-content: flex-start; padding-left: 40px; }
+  .pagina-rotulo { writing-mode: horizontal-tb; transform: none; right: 8px; top: 8px; padding: 3px 6px; background: rgba(255,255,255,.85); border-radius: 4px; }
+  .dica { flex-basis: 100%; }
+}
+@media (max-width: 700px) {
+  body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .lateral { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-right: none; border-bottom: 1px solid var(--linha); }
+  .data-hoje, .marca-sub { display: none; }
+  .lateral-rodape { margin: 0; padding: 0; border: none; order: 2; }
+  .lista-pastas { flex-direction: row; overflow-x: auto; flex: 1 1 100%; order: 3; }
+  .pasta-item { flex: none; }
+  .nova-pasta { margin: 0; order: 2; }
+  .marca { order: 1; flex: 1; }
+}
